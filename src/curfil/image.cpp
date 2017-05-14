@@ -27,9 +27,6 @@
 #endif
 #include "image.h"
 
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/format.hpp>
 #include <cmath>
 #include <iomanip>
 #include <map>
@@ -62,7 +59,7 @@ RGBColor::RGBColor(uint8_t r, uint8_t g, uint8_t b) :
 
 RGBColor::RGBColor(const std::string& colorString) :
                 std::vector<uint8_t>(3, 0) {
-            std::vector<std::string> strs;
+            std::vector<boost::filesystem::path::string_type> strs;
             // key is in the format: "255,255,255"
             boost::split(strs, colorString, boost::is_any_of(","));
 
@@ -105,7 +102,7 @@ static vigra::DVector3Image convertCIELab2RGB(const vigra::DVector3Image& srcIma
 }
 
 template<class T>
-static void loadImage(const std::string& filename, T& image) {
+static void loadImage(const boost::filesystem::path::string_type& filename, T& image) {
     vigra::ImageImportInfo info(filename.c_str());
 
     if (info.isGrayscale() || !info.isColor() || info.numBands() != 3) {
@@ -118,7 +115,9 @@ static void loadImage(const std::string& filename, T& image) {
     vigra::importImage(info, vigra::destImage(image));
 }
 
-RGBDImage::RGBDImage(const std::string& filename, const std::string& depthFilename, bool useDepthImages, bool convertToCIELab,
+
+
+RGBDImage::RGBDImage(const boost::filesystem::path::string_type& filename, const boost::filesystem::path::string_type& depthFilename, bool useDepthImages, bool convertToCIELab,
         bool useDepthFilling, bool calculateIntegralImage) :
         filename(filename), depthFilename(depthFilename),
                 colorImage(boost::make_shared<cuv::cuda_allocator>()),
@@ -132,7 +131,10 @@ RGBDImage::RGBDImage(const std::string& filename, const std::string& depthFilena
         try {
             loadImage(filename, image);
         } catch (const std::exception& e) {
-            throw std::runtime_error(std::string("failed to load image '") + filename + "': " + e.what());
+			std::ostringstream ss;
+			ss << L"failed to load image '" << filename.c_str() << "': " << e.what();
+            throw std::runtime_error(ss.str());
+			ss.clear();
         }
 
         if (convertToCIELab) {
@@ -157,9 +159,10 @@ RGBDImage::RGBDImage(const std::string& filename, const std::string& depthFilena
 			try {
 				loadDepthImage(depthFilename);
 			} catch (const std::exception& e) {
-				throw std::runtime_error(
-						std::string("failed to load depth image '")
-								+ depthFilename + "': " + e.what());
+				std::ostringstream ss;
+				ss << "failed to load depth image '" << depthFilename.c_str() << "': " << e.what();
+				throw std::runtime_error(ss.str());
+				ss.clear();
 			}
 		} else
 			loadDummyDepthValues();
@@ -176,7 +179,7 @@ RGBDImage::RGBDImage(const std::string& filename, const std::string& depthFilena
 }
 
 RGBDImage::RGBDImage(const RGBDImage& other) :
-        filename(other.filename), depthFilename(other.depthFilename),
+        filename(other.filename.c_str()), depthFilename(other.depthFilename.c_str()),
                 width(other.width), height(other.height),
                 colorImage(other.colorImage.copy()),
                 depthImage(other.depthImage.copy()),
@@ -393,7 +396,7 @@ void RGBDImage::loadDummyDepthValues() {
 
 }
 
-void RGBDImage::loadDepthImage(const std::string& depthFilename) {
+void RGBDImage::loadDepthImage(const boost::filesystem::path::string_type& depthFilename) {
 
     vigra::ImageImportInfo info(depthFilename.c_str());
 
@@ -429,7 +432,7 @@ void RGBDImage::loadDepthImage(const std::string& depthFilename) {
             const int depth = image(x, y);
             if (depth < 0 || depth > 50000) {
                 throw std::runtime_error((boost::format("illegal depth value in image %s @%d,%d: %d")
-                        % depthFilename % x % y % depth).str());
+                        % depthFilename.c_str() % x % y % depth).str());
             }
 
             if (depth > 0) {
@@ -443,7 +446,7 @@ void RGBDImage::loadDepthImage(const std::string& depthFilename) {
 
     double depthAvg = depthAverage.getAverage();
     if (depthAvg < 0.01 || depthAvg > 10.0) {
-        throw std::runtime_error((boost::format("illegal average depth of '%s': %e") % depthFilename % depthAvg).str());
+        throw std::runtime_error((boost::format("illegal average depth of '%s': %e") % depthFilename.c_str() % depthAvg).str());
     }
 }
 
@@ -580,7 +583,7 @@ void RGBDImage::calculateDerivative() {
 }
 
 // http://www.cs.washington.edu/rgbd-dataset/trd5326jglrepxk649ed/rgbd-dataset_full/README.txt
-void RGBDImage::saveDepth(const std::string& filename) const {
+void RGBDImage::saveDepth(const boost::filesystem::path::string_type& filename) const {
 
     cuv::ndarray<int, cuv::host_memory_space> tempDepthData = depthImage.copy();
 
@@ -609,7 +612,7 @@ void RGBDImage::saveDepth(const std::string& filename) const {
             vigra::ImageExportInfo(filename.c_str()).setPixelType("UINT16"));
 }
 
-void RGBDImage::saveColor(const std::string& filename) const {
+void RGBDImage::saveColor(const boost::filesystem::path::string_type& filename) const {
 
     vigra::DVector3Image image(getWidth(), getHeight());
 
@@ -718,14 +721,17 @@ RGBColor LabelImage::decodeLabel(const LabelType& v) {
     throw std::runtime_error(o.str());
 }
 
-LabelImage::LabelImage(const std::string& filename) :
+LabelImage::LabelImage(const boost::filesystem::path::string_type& filename) :
         filename(filename) {
 
     vigra::UInt8RGBImage labelImage;
     try {
         loadImage(filename, labelImage);
     } catch (const std::exception& e) {
-        throw std::runtime_error(std::string("failed to load label image '") + filename + "': " + e.what());
+		std::ostringstream ss;
+		ss << "failed to load label image '" << filename.c_str() << "': " << e.what();
+        throw std::runtime_error(ss.str());
+		ss.clear();
     }
 
     width = labelImage.width();
@@ -744,7 +750,7 @@ LabelImage::LabelImage(const std::string& filename) :
     }
 }
 
-void LabelImage::save(const std::string& filename) const {
+void LabelImage::save(const boost::filesystem::path::string_type& filename) const {
     vigra::UInt8RGBImage labelImage(width, height);
 
     for (int x = 0; x < width; ++x) {
@@ -784,8 +790,8 @@ LabeledRGBDImage::LabeledRGBDImage(const boost::shared_ptr<RGBDImage>& rgbdImage
         rgbdImage(rgbdImage), labelImage(labelImage) {
     if (rgbdImage->getWidth() != labelImage->getWidth() || rgbdImage->getHeight() != labelImage->getHeight()) {
         std::ostringstream o;
-        o << "RGB-D image '" << rgbdImage->getFilename();
-        o << "' and label image '" << labelImage->getFilename();
+        o << "RGB-D image '" << rgbdImage->getFilename().c_str();
+        o << "' and label image '" << labelImage->getFilename().c_str();
         o << "' have different sizes: ";
         o << rgbdImage->getWidth() << "x" << rgbdImage->getHeight();
         o << " and " << labelImage->getWidth() << "x" << labelImage->getHeight();
@@ -804,22 +810,29 @@ void LabeledRGBDImage::calculateIntegral() const
 	rgbdImage->calculateIntegral();
 }
 
-LabeledRGBDImage loadImagePair(const std::string& filename, bool useCIELab,bool useDepthImages, bool useDepthFilling,
+// ILIN: Windows boost path conversion
+LabeledRGBDImage loadImagePair(const boost::filesystem::path::string_type& filename, bool useCIELab,bool useDepthImages, bool useDepthFilling,
         bool calculateIntegralImages) {
-    auto pos = filename.find("_colors.png");
-    std::string labelFilename = filename;
-    std::string depthFilename = filename;
+    auto pos = filename.find(L"_colors.png");
+	boost::filesystem::path::string_type labelFilename = filename;
+	boost::filesystem::path::string_type depthFilename = filename;
     try {
-        labelFilename.replace(pos, labelFilename.length(), "_ground_truth.png");
+        labelFilename.replace(pos, labelFilename.length(), L"_ground_truth.png");
     } catch (const std::exception& e) {
-        throw std::runtime_error(std::string("illegal label image filename: ") + labelFilename);
+		std::ostringstream ss;
+		ss << L"illegal label image filename: " << labelFilename.c_str();
+        throw std::runtime_error(ss.str());
+		ss.clear();
     }
 
 	if (useDepthImages) {
 		try {
-			depthFilename.replace(pos, depthFilename.length(), "_depth.png");
+			depthFilename.replace(pos, depthFilename.length(), L"_depth.png");
 		} catch (const std::exception& e) {
-			throw std::runtime_error(std::string("illegal depth image filename: ") + depthFilename);
+			std::ostringstream ss;
+			ss << L"illegal depth image filename: " << depthFilename.c_str();
+			throw std::runtime_error(ss.str());
+			ss.clear();
 		}
 	}
 
@@ -829,25 +842,29 @@ LabeledRGBDImage loadImagePair(const std::string& filename, bool useCIELab,bool 
     return LabeledRGBDImage(rgbdImage, labelImage);
 }
 
-std::vector<std::string> listImageFilenames(const std::string& path) {
+//ILIN: Windows path conversion
+std::vector<boost::filesystem::path::string_type> listImageFilenames(const boost::filesystem::path::string_type& path) {
 
-    std::vector<std::string> filenames;
+	std::vector<boost::filesystem::path::string_type> filenames;
 
     fs::path targetDir(path);
     fs::directory_iterator eod;
     for (fs::directory_iterator it(targetDir); it != eod; it++) {
         const fs::path p = *it;
         if (fs::is_regular_file(p)) {
-            std::string filename = p.native();
-            if (filename.find("_colors.png") != std::string::npos) {
+			//ILIN: Windows path conversion
+			const boost::filesystem::path::string_type filename = p.native();
+            if (filename.find(L"_colors.png") != boost::filesystem::path::string_type::npos) {
                 filenames.push_back(filename);
             }
         } else if (fs::is_directory(p)) {
-            for (const auto& filename : listImageFilenames(p.native())) {
+			//ILIN: Windows path conversion
+            //for (const auto& filename : listImageFilenames(p.native())) {
+			for (const boost::filesystem::path::string_type& filename : listImageFilenames(p.native())) {
                 filenames.push_back(filename);
             }
         } else {
-            throw std::runtime_error((boost::format("unknown path: %s") % p.native()).str());
+            throw std::runtime_error((boost::format("unknown path: %s") % p.native().c_str()).str());
         }
     }
 
@@ -866,12 +883,12 @@ LabelType getPaddingLabel(const std::vector<std::string>& ignoredColors) {
 	return LabelImage::encodeColor(color);
 }
 
-std::vector<LabeledRGBDImage> loadImages(const std::string& folder, bool useCIELab, bool useDepthImages, bool useDepthFilling,  const std::vector<std::string>& ignoredColors, size_t& numLabels) {
+// ILIN: Boost windows path conversion
+std::vector<LabeledRGBDImage> loadImages(const boost::filesystem::path::string_type& folder, bool useCIELab, bool useDepthImages, bool useDepthFilling,  const std::vector<std::string>& ignoredColors, size_t& numLabels) {
+    std::vector<boost::filesystem::path::string_type> filenames = listImageFilenames(folder);
+    CURFIL_INFO("going to load " << filenames.size() << " images from " << folder.c_str());
 
-    std::vector<std::string> filenames = listImageFilenames(folder);
-    CURFIL_INFO("going to load " << filenames.size() << " images from " << folder);
-
-	//filenames.erase(filenames.begin()+100, filenames.end());
+	filenames.erase(filenames.begin()+100, filenames.end());
 
     size_t totalSizeInMemory = 0;
 	int maxWidth = 0;
@@ -888,8 +905,9 @@ std::vector<LabeledRGBDImage> loadImages(const std::string& folder, bool useCIEL
             [&](const tbb::blocked_range<size_t>& range) {
                 for(size_t i = range.begin(); i != range.end(); i++) {
 
-                    const auto& filename = filenames[i];
-                    images[i] = loadImagePair(filename, useCIELab, useDepthImages, useDepthFilling);
+					const auto& filename = filenames[i];
+					bool calculateIntegralImages = true;
+                    images[i] = loadImagePair(filename, useCIELab, useDepthImages, useDepthFilling, calculateIntegralImages);
                     {
                         tbb::mutex::scoped_lock lock(imageCounterMutex);
                         {
@@ -931,7 +949,7 @@ std::vector<LabeledRGBDImage> loadImages(const std::string& folder, bool useCIEL
 						image.resizeImage(maxWidth, maxHeight, paddingLabel);
 						if (image.getWidth() != maxWidth || image.getHeight() != maxHeight) {
 							std::ostringstream o;
-							o << "Image " << image.getRGBDImage().getFilename()
+							o << "Image " << image.getRGBDImage().getFilename().c_str()
 							<< " has different size: ";
 							o << image.getWidth() << "x" << image.getHeight();
 							o << ". All images in the dataset should be resized to the maximum size("
@@ -946,7 +964,7 @@ std::vector<LabeledRGBDImage> loadImages(const std::string& folder, bool useCIEL
 						totalSizeInMemory += image.getSizeInMemory();
 			            if (image.getSizeInMemory() != imageSizeInMemory) {
 			                std::ostringstream o;
-			                o << "Image " << image.getRGBDImage().getFilename() << " has different size in memory: ";
+			                o << "Image " << image.getRGBDImage().getFilename().c_str() << " has different size in memory: ";
 			                o << image.getSizeInMemory() << " (expected: " << imageSizeInMemory << ").";
 			                o << " This must not happen.";
 			                throw std::runtime_error(o.str());

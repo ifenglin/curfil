@@ -28,6 +28,9 @@
 #ifndef CURFIL_IMAGE_H
 #define CURFIL_IMAGE_H
 
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cassert>
 #include <cuv/ndarray.hpp>
@@ -208,7 +211,7 @@ public:
 	 * See the README file for the required file format.
 	 */
 
-    explicit RGBDImage(const std::string& filename, const std::string& depthFilename, bool useDepthImages,
+    explicit RGBDImage(const boost::filesystem::path::string_type& filename, const boost::filesystem::path::string_type& depthFilename, bool useDepthImages,
             bool convertToCIELab = true,
             bool useDepthFilling = false,
             bool calculateIntegralImage = true);
@@ -217,7 +220,7 @@ public:
      * For the test case
      */
     explicit RGBDImage(int width, int height) :
-            filename(""), depthFilename(""),
+            filename(L""), depthFilename(L""),
                     width(width), height(height),
                     colorImage(cuv::extents[COLOR_CHANNELS][height][width], boost::make_shared<cuv::cuda_allocator>()),
                     depthImage(cuv::extents[DEPTH_CHANNELS][height][width], boost::make_shared<cuv::cuda_allocator>()),
@@ -226,7 +229,9 @@ public:
         reset();
     }
 
-    /**
+	//RGBDImage(const boost::filesystem::path::string_type & filename, const boost::filesystem::path::string_type & depthFilename, bool useDepthImages, bool convertToCIELab, bool useDepthFilling, bool calculateIntegralImage);
+
+	/**
      * uses the attributes of another object to set its attributes
      */
     RGBDImage(const RGBDImage& other);
@@ -302,17 +307,17 @@ public:
     /**
      * save (export) the image color channels to a file
      */
-    void saveColor(const std::string& filename) const;
+    void saveColor(const boost::filesystem::path::string_type& filename) const;
 
     /**
      * save (export) the image depth channels to a file
      */
-    void saveDepth(const std::string& filename) const;
+    void saveDepth(const boost::filesystem::path::string_type& filename) const;
 
     /**
      * @return the name of the file this image was loaded from
      */
-    const std::string& getFilename() const {
+    const boost::filesystem::path::string_type& getFilename() const {
         return filename;
     }
 
@@ -413,8 +418,8 @@ public:
 
 private:
 
-    std::string filename;
-    std::string depthFilename;
+	boost::filesystem::path::string_type filename;
+	boost::filesystem::path::string_type depthFilename;
     int width;
     int height;
     cuv::ndarray<float, cuv::host_memory_space> colorImage;
@@ -427,7 +432,7 @@ private:
     static const unsigned int COLOR_CHANNELS = 3;
     static const unsigned int DEPTH_CHANNELS = 2;
 
-    void loadDepthImage(const std::string& depthFilename);
+    void loadDepthImage(const boost::filesystem::path::string_type& depthFilename);
     void loadDummyDepthValues();
     void fillDepthFromRight();
     void fillDepthFromLeft();
@@ -455,7 +460,7 @@ class LabelImage {
 
 private:
 
-    std::string filename;
+	boost::filesystem::path::string_type filename;
     int width;
     int height;
     cuv::ndarray<LabelType, cuv::host_memory_space> image;
@@ -480,12 +485,13 @@ public:
     /**
      * Loads a label image from an image file from disk. Each color in the image is assigned to a unique color id.
      */
-    LabelImage(const std::string& filename);
+
+	LabelImage(const boost::filesystem::path::string_type & filename);
 
     /**
      * @return the filename this label image was loaded from. Empty if it was created manually.
      */
-    const std::string& getFilename() const {
+    const boost::filesystem::path::string_type& getFilename() const {
         return filename;
     }
 
@@ -504,7 +510,7 @@ public:
     /**
      * store (export) this label image to the given filename
      */
-    void save(const std::string& filename) const;
+    void save(const boost::filesystem::path::string_type& filename) const;
 
     /**
      * convert the internal unique label id to a RGBColor
@@ -640,20 +646,20 @@ public:
 /**
  * Convenience function to load and convert a RGBD image and the according label image
  */
-LabeledRGBDImage loadImagePair(const std::string& filename, bool useCIELab, bool useDepthImages,  bool useDepthFilling,
+LabeledRGBDImage loadImagePair(const boost::filesystem::path::string_type& filename, bool useCIELab, bool useDepthImages,  bool useDepthFilling,
         bool calculateIntegralImages = true);
 
 /**
  * Convenience function to find all files in the given folder that match the required filename schema.
  * See the README for the filename schema.
  */
-std::vector<std::string> listImageFilenames(const std::string& folder);
+std::vector<boost::filesystem::path::string_type> listImageFilenames(const boost::filesystem::path::string_type& folder);
 
 /**
  * Convenience function to find all files in the given folder that match the required filename schema.
  * See the README for the filename schema.
  */
-std::vector<LabeledRGBDImage> loadImages(const std::string& folder, bool useCIELab, bool useDepthImages, bool useDepthFilling, const std::vector<std::string>& ignoredColors, size_t& numLabels);
+std::vector<LabeledRGBDImage> loadImages(const boost::filesystem::path::string_type& folder, bool useCIELab, bool useDepthImages, bool useDepthFilling, const std::vector<boost::filesystem::path::string_type>& ignoredColors, size_t& numLabels);
 
 }
 

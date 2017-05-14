@@ -26,7 +26,7 @@
 #######################################################################################
 #endif
 #include "predict.h"
-
+#define NOMINMAX
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <iomanip>
@@ -206,13 +206,16 @@ double calculatePixelAccuracy(const LabelImage& prediction, const LabelImage& gr
     return static_cast<double>(correct) / numPixels;
 }
 
-void test(RandomForestImage& randomForest, const std::string& folderTesting,
-        const std::string& folderPrediction, const bool useDepthFilling,
+void test(RandomForestImage& randomForest, const boost::filesystem::path::string_type& folderTesting,
+        const boost::filesystem::path::string_type& folderPrediction, const bool useDepthFilling,
         const bool writeProbabilityImages) {
 
     auto filenames = listImageFilenames(folderTesting);
     if (filenames.empty()) {
-        throw std::runtime_error(std::string("found no files in ") + folderTesting);
+		std::ostringstream ss;
+		ss << L"found no files in " << folderTesting.c_str();
+        throw std::runtime_error(ss.str());
+		ss.clear();
     }
 
     CURFIL_INFO("got " << filenames.size() << " files for prediction");
@@ -261,7 +264,7 @@ void test(RandomForestImage& randomForest, const std::string& folderTesting,
     tbb::parallel_for(tbb::blocked_range<size_t>(0, filenames.size(), grainSize),
             [&](const tbb::blocked_range<size_t>& range) {
                 for(size_t fileNr = range.begin(); fileNr != range.end(); fileNr++) {
-                    const std::string& filename = filenames[fileNr];
+                    const auto& filename = filenames[fileNr];
                     const auto imageLabelPair = loadImagePair(filename, useCIELab, useDepthImages, useDepthFilling);
                     const RGBDImage& testImage = imageLabelPair.getRGBDImage();
                     const LabelImage& groundTruth = imageLabelPair.getLabelImage();
@@ -272,7 +275,7 @@ void test(RandomForestImage& randomForest, const std::string& folderTesting,
                             const LabelType label = groundTruth.getLabel(x, y);
                             if (label >= numClasses) {
                                 const auto msg = (boost::format("illegal label in ground truth image '%s' at pixel (%d,%d): %d RGB(%3d,%3d,%3d) (numClasses: %d)")
-                                        % filename
+                                        % filename.c_str()
                                         % x % y
                                         % static_cast<int>(label)
                                         % LabelImage::decodeLabel(label)[0]
@@ -286,7 +289,11 @@ void test(RandomForestImage& randomForest, const std::string& folderTesting,
                     }
 
                     boost::filesystem::path fn(testImage.getFilename());
-                    const std::string basepath = folderPrediction + "/" + boost::filesystem::basename(fn);
+					//ILIN : windows path conversion
+					
+					const std::string basename = boost::filesystem::basename(fn);
+					const std::wstring widestr_basename = std::wstring(basename.begin(), basename.end());
+					const boost::filesystem::path::string_type basepath = folderPrediction + L"/" + widestr_basename;
 
                     cuv::ndarray<float, cuv::host_memory_space> probabilities;
                     utils::Timer timer2;
@@ -324,7 +331,7 @@ void test(RandomForestImage& randomForest, const std::string& folderTesting,
                             probabilityImage.setDepth(x, y, Depth(probability * std::numeric_limits<int>::max()));
                         }
                     }
-                    const std::string filename = (boost::format("%s_label_%d.png") % basepath % static_cast<int>(label)).str();
+                    const boost::filesystem::path::string_type filename = (boost::wformat(L"%s_label_%d.png") % basepath % static_cast<int>(label)).str();
                     probabilityImage.saveDepth(filename);
                 }
             }
@@ -338,11 +345,11 @@ void test(RandomForestImage& randomForest, const std::string& folderTesting,
 
             if (writeImages) {
                 utils::Profile profile("writeImages");
-                testImage.saveColor(basepath + ".png");
+                testImage.saveColor(basepath + L".png");
                 if (useDepthImages){
-                	testImage.saveDepth(basepath + "_depth.png");}
-                groundTruth.save(basepath + "_ground_truth.png");
-                prediction.save(basepath + "_prediction.png");
+                	testImage.saveDepth(basepath + L"_depth.png");}
+                groundTruth.save(basepath + L"_ground_truth.png");
+                prediction.save(basepath + L"_prediction.png");
             }
 
             ConfusionMatrix confusionMatrix(numClasses);
@@ -350,10 +357,12 @@ void test(RandomForestImage& randomForest, const std::string& folderTesting,
             double accuracyWithoutVoid = calculatePixelAccuracy(prediction, groundTruth, false,  &ignoredLabels, &confusionMatrix);
 
             tbb::mutex::scoped_lock lock(totalMutex);
-
-            CURFIL_INFO("prediction " << (thisNumber + 1) << "/" << filenames.size()
-                    << " (" << testImage.getFilename() << "): pixel accuracy (without void): " << 100 * accuracy
-                    << " (" << 100 * accuracyWithoutVoid << ")");
+			std::ostringstream ss;
+			ss << "prediction " << (thisNumber + 1) << "/" << filenames.size()
+				<< " (" << testImage.getFilename().c_str() << "): pixel accuracy (without void): " << 100 * accuracy
+				<< " (" << 100 * accuracyWithoutVoid << ")";
+            CURFIL_INFO(ss.str());
+			ss.clear();
 
             averageAccuracy.addValue(accuracy);
             averageAccuracyWithoutVoid.addValue(accuracyWithoutVoid);
@@ -367,11 +376,15 @@ void test(RandomForestImage& randomForest, const std::string& folderTesting,
     tbb::mutex::scoped_lock lock(totalMutex);
     double accuracy = averageAccuracy.getAverage();
     double accuracyWithoutVoid = averageAccuracyWithoutVoid.getAverage();
-
-    CURFIL_INFO(totalConfusionMatrix);
-
-    CURFIL_INFO("pixel accuracy: " << 100 * accuracy);
-    CURFIL_INFO("pixel accuracy without void: " << 100 * accuracyWithoutVoid);
+	//ILIN: string issue
+    //CURFIL_INFO(totalConfusionMatrix);
+	std::stringstream ss;
+	ss << "pixel accuracy: " << 100 * accuracy;
+    CURFIL_INFO(ss.str());
+	ss.clear();
+	ss << "pixel accuracy without void: " << 100 * accuracyWithoutVoid;
+    CURFIL_INFO(ss.str());
+	ss.clear();
 }
 
 }

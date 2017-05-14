@@ -38,8 +38,8 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <fstream>
 #include <set>
-#include <sys/sysinfo.h>
-#include <unistd.h>
+//#include <sys/sysinfo.h>
+//#include <unistd.h>
 #include <vector>
 
 #include "version.h"
@@ -177,11 +177,15 @@ boost::property_tree::ptree RandomTreeExport::getProcessorModelNames() {
     return processorModels;
 }
 
+
+
 void RandomTreeExport::writeTree(boost::property_tree::ptree& pt, const RandomTreeImage& tree) const {
 
     char hostname[1024];
     hostname[1023] = '\0';
-    gethostname(hostname, 1023);
+    //hard coded to replace function gethostname 
+	//gethostname(hostname, 1023);
+	strncpy(hostname, "LAPTOP-16QJBHCV", 1023);
 
     pt.put("hostname", hostname);
 
@@ -195,7 +199,9 @@ void RandomTreeExport::writeTree(boost::property_tree::ptree& pt, const RandomTr
     pt.put("date", date);
     pt.put("randomSeed", configuration.getRandomSeed());
     pt.put("folderTraining", boost::filesystem::absolute(boost::filesystem::path(trainingFolder)).string());
-    pt.put("numCores", get_nprocs());
+    //hardcoded to replace function get_nprocs
+	//pt.put("numCores", get_nprocs());
+	pt.put("numCores", 4);
     pt.put("numPhysicalCPUs", getPhysicalCpus());
     pt.put_child("processorModels", getProcessorModelNames());
     pt.put("accelerationMode", configuration.getAccelerationModeString());

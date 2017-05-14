@@ -18,7 +18,7 @@
 # 
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -26,6 +26,8 @@
 #######################################################################################
 #endif
 #include "random_tree_image.h"
+
+#define NOMINMAX
 
 #include <boost/format.hpp>
 #include <map>
@@ -35,6 +37,7 @@
 #include <tbb/parallel_for_each.h>
 #include <thrust/gather.h>
 #include <thrust/sort.h>
+#include <String>
 
 #include "ndarray_ops.h"
 #include "random_tree_image_gpu.h"
@@ -198,7 +201,8 @@ cuv::ndarray<ScoreType, cuv::host_memory_space> ImageFeatureEvaluation::calculat
 
     utils::Profile profile("calculateScores");
 
-    const size_t numLabels = histogram.size();
+    //const size_t numLabels = histogram.size();
+	const size_t numLabels = 1000;
     assert(numLabels > 0);
 
     for (size_t featureNr = 0; featureNr < numFeatures; featureNr++) {
@@ -340,7 +344,7 @@ std::vector<SplitFunction<PixelInstance, ImageFeatureFunction> > ImageFeatureEva
 
                         assert(numThreads > 0);
 
-                        size_t grainSize = std::max(100ul, samples.size() / numThreads);
+                        size_t grainSize = std::max((unsigned long long)100ul, (unsigned long long)samples.size() / numThreads);
 
                         CURFIL_DEBUG("start evaluation");
 
@@ -469,9 +473,12 @@ std::vector<SplitFunction<PixelInstance, ImageFeatureFunction> > ImageFeatureEva
                     }
 
                     SplitFunction<PixelInstance, ImageFeatureFunction> bestFeature(bestFeat, feature, threshold, bestScore);
-
-                    CURFIL_DEBUG("tree " << currentNode.getTreeId() << ", node " << currentNode.getNodeId() <<
-                            ", best score: " << bestScore << ", " << feature);
+					
+                    //CURFIL_DEBUG("tree " << currentNode.getTreeId() << ", node " << currentNode.getNodeId() <<
+                    //        ", best score: " << bestScore << ", " << feature);
+					//ILIN: string issue
+					CURFIL_DEBUG("tree " << currentNode.getTreeId() << ", node " << currentNode.getNodeId() <<
+					        ", best score: " << bestScore << ", ");
 
                    unsigned int index = bestFeat * configuration.getThresholds() * currentNode.getNumClasses() * 2;
                    index += bestThresh * currentNode.getNumClasses() * 2;

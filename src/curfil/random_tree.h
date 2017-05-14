@@ -1198,15 +1198,16 @@ private:
     		cuv::ndarray<WeightType, cuv::host_memory_space> rightHistogram,
              const SplitFunction<Instance, FeatureFunction>& bestSplit, size_t histogramSize) const {
 
+		const int prelocated_histogramSize = 10000;
          const unsigned int leftRightStride = 1; // consecutive in memory
 
          // assert that actual score is the same as the calculated score
          double totalLeft = sum(leftHistogram);
          double totalRight = sum(rightHistogram);
 
-         WeightType leftHistogramArray[histogramSize];
-         WeightType rightHistogramArray[histogramSize];
-         WeightType allHistogramArray[histogramSize];
+         WeightType leftHistogramArray[prelocated_histogramSize];
+         WeightType rightHistogramArray[prelocated_histogramSize];
+         WeightType allHistogramArray[prelocated_histogramSize];
 
          std::stringstream strLeft;
          std::stringstream strRight;
@@ -1377,7 +1378,7 @@ public:
                 CURFIL_ERROR("best split score: " << bestSplit.getScore());
                 CURFIL_ERROR("samples: " << samples.size());
                 CURFIL_ERROR("threshold: " << bestSplit.getThreshold());
-                CURFIL_ERROR("feature: " << bestSplit.getFeature());
+                //CURFIL_ERROR("feature: " << bestSplit.getFeature());
                 CURFIL_ERROR("histogram: " << currentNode->getHistogram());
                 CURFIL_ERROR("samplesLeft: " << samplesLeft.size());
                 CURFIL_ERROR("samplesRight: " << samplesRight.size());

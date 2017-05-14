@@ -59,8 +59,10 @@ RandomForestImage::RandomForestImage(const std::vector<std::string>& treeFiles,
             [&](const tbb::blocked_range<size_t>& range) {
 
                 for(size_t tree = range.begin(); tree != range.end(); tree++) {
-                    CURFIL_INFO("reading tree " << tree << " from " << treeFiles[tree]);
-
+					std::ostringstream ss;
+					ss << "reading tree " << tree << " from " << treeFiles[tree];
+                    CURFIL_INFO(ss.str());
+					ss.clear();
                     boost::shared_ptr<RandomTreeImage> randomTree;
 
                     std::string hostname;
@@ -69,16 +71,18 @@ RandomForestImage::RandomForestImage(const std::vector<std::string>& treeFiles,
 
                     TrainingConfiguration configuration = RandomTreeImport::readJSON(treeFiles[tree], randomTree, hostname,
                             folderTraining, date);
-
-                    CURFIL_INFO("trained " << date << " on " << hostname);
-                    CURFIL_INFO("training folder: " << folderTraining);
-
+					ss << "trained " << date << " on " << hostname;
+                    CURFIL_INFO(ss.str());
+					ss.clear();
+					ss << "training folder: " << folderTraining;
+                    CURFIL_INFO(ss.str());
+					ss.clear();
                     assert(randomTree);
 
                     ensemble[tree] = randomTree;
                     configurations[tree] = configuration;
-
-                    CURFIL_INFO(*randomTree);
+					//ILIN: string issue
+                    //CURFIL_INFO(*randomTree);
                 }
 
             });
@@ -86,19 +90,21 @@ RandomForestImage::RandomForestImage(const std::vector<std::string>& treeFiles,
     for (size_t i = 1; i < treeFiles.size(); i++) {
         bool strict = false;
         if (!configurations[0].equals(configurations[i], strict)) {
-            CURFIL_ERROR("configuration of tree 0: " << configurations[0]);
-            CURFIL_ERROR("configuration of tree " << i << ": " << configurations[i]);
+			//ILIN: string issue
+            //CURFIL_ERROR("configuration of tree 0: " << configurations[0]);
+            //CURFIL_ERROR("configuration of tree " << i << ": " << configurations[i]);
             throw std::runtime_error("different configurations");
         }
 
         if (ensemble[0]->getTree()->getNumClasses() != ensemble[i]->getTree()->getNumClasses()) {
-            CURFIL_ERROR("number of classes of tree 0: " << ensemble[0]->getTree()->getNumClasses());
-            CURFIL_ERROR("number of classes of tree " << i << ": " << ensemble[i]->getTree()->getNumClasses());
+			//ILIN: string issue
+            //CURFIL_ERROR("number of classes of tree 0: " << ensemble[0]->getTree()->getNumClasses());
+            //CURFIL_ERROR("number of classes of tree " << i << ": " << ensemble[i]->getTree()->getNumClasses());
             throw std::runtime_error("different number of classes in trees");
         }
     }
-
-    CURFIL_INFO("training configuration " << configurations[0]);
+	//ILIN: string issue
+    //CURFIL_INFO("training configuration " << configurations[0]);
 
     this->configuration = configurations[0];
     this->configuration.setDeviceIds(deviceIds);
@@ -164,14 +170,19 @@ void RandomForestImage::train(const std::vector<LabeledRGBDImage>& trainLabelIma
                     for (auto& image : trainLabelImages) {
                         reservoirSampler.sample(sampler, image);
                     }
-
-                    CURFIL_INFO("tree " << tree->getId() << ": sampled " << reservoirSampler.getReservoir().size()
-                            << " out of " << trainLabelImages.size() << " images");
+					std::ostringstream ss;
+					ss << "tree " << tree->getId() << ": sampled " << reservoirSampler.getReservoir().size()
+						<< " out of " << trainLabelImages.size() << " images";
+                    CURFIL_INFO(ss.str());
+					ss.clear();
                     sampledTrainLabelImages = reservoirSampler.getReservoir();
                 }
 
                 tree->train(sampledTrainLabelImages, randomSource, configuration.getSamplesPerImage() / treeCount, numLabels);
-                CURFIL_INFO("finished tree " << tree->getId() << " with random seed " << seed << " in " << timer.format(3));
+				std::ostringstream ss;
+				ss << "finished tree " << tree->getId() << " with random seed " << seed << " in " << timer.format(3);
+                CURFIL_INFO(ss.str());
+				ss.clear();
             };
 
     if (!trainTreesSequentially && numThreads > 1) {

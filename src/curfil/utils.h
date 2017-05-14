@@ -32,6 +32,8 @@
 #include <boost/format.hpp>
 #include <sstream>
 #include <string>
+#include <iostream>     // std::cout
+#include <algorithm>    // std::min
 
 namespace curfil {
 

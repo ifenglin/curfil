@@ -91,7 +91,8 @@ RandomForestImage train(std::vector<LabeledRGBDImage>& images, size_t trees,
 
     CURFIL_INFO("trees: " << trees);
     CURFIL_INFO("training trees in parallel: " << trainTreesInParallel);
-    CURFIL_INFO(configuration);
+	//ILIN: string issue
+    //CURFIL_INFO(configuration);
 
     // Train
 
@@ -128,7 +129,8 @@ RandomForestImage train(std::vector<LabeledRGBDImage>& images, size_t trees,
         });
         randomForest.updateTreesHistograms();
 */
-    std::cout << randomForest;
+	//ILIN: string issue
+    //std::cout << randomForest;
     for (const auto& featureCount : randomForest.countFeatures()) {
         const std::string featureType = featureCount.first;
         CURFIL_INFO("feature " << featureType << ": " << featureCount.second);
