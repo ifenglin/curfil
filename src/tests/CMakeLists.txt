@@ -29,25 +29,25 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
 
 SET (TEST_LINK_LIBS curfil)
 
-ADD_EXECUTABLE(image_test image_test.cpp)
+ADD_EXECUTABLE(image_test image_test.cpp STATIC)
 TARGET_LINK_LIBRARIES(image_test ${TEST_LINK_LIBS})
 
-CUDA_ADD_EXECUTABLE(random_tree_test random_tree_test.cpp)
+CUDA_ADD_EXECUTABLE(random_tree_test random_tree_test.cpp STATIC)
 TARGET_LINK_LIBRARIES(random_tree_test ${TEST_LINK_LIBS})
 
-CUDA_ADD_EXECUTABLE(random_tree_image_gpu_test random_tree_image_gpu_test.cu)
+CUDA_ADD_EXECUTABLE(random_tree_image_gpu_test random_tree_image_gpu_test.cu STATIC)
 TARGET_LINK_LIBRARIES(random_tree_image_gpu_test ${TEST_LINK_LIBS})
 
-CUDA_ADD_EXECUTABLE(image_cache_test image_cache_test.cu)
+CUDA_ADD_EXECUTABLE(image_cache_test image_cache_test.cu STATIC)
 TARGET_LINK_LIBRARIES(image_cache_test ${TEST_LINK_LIBS})
 
-ADD_EXECUTABLE(feature_generation_test feature_generation_test.cpp)
+ADD_EXECUTABLE(feature_generation_test feature_generation_test.cpp STATIC)
 TARGET_LINK_LIBRARIES(feature_generation_test ${TEST_LINK_LIBS})
 
-ADD_EXECUTABLE(import_export_test import_export_test.cpp)
+ADD_EXECUTABLE(import_export_test import_export_test.cpp STATIC)
 TARGET_LINK_LIBRARIES(import_export_test ${TEST_LINK_LIBS})
 
-ADD_EXECUTABLE(random_tree_image_test random_tree_image_test.cpp)
+ADD_EXECUTABLE(random_tree_image_test random_tree_image_test.cpp STATIC)
 TARGET_LINK_LIBRARIES(random_tree_image_test ${TEST_LINK_LIBS})
 
 ADD_TEST(image_test "${CMAKE_BINARY_DIR}/src/tests/image_test")

@@ -324,7 +324,7 @@ BOOST_AUTO_TEST_CASE(testWriteReadRGBDImage) {
             for (unsigned int c = 0; c < 3; c++) {
                 unsigned int expectedColor = image.getColor(x, y, c);
                 unsigned int actualColor = readImage.getColor(x, y, c);
-                BOOST_REQUIRE(abs(actualColor - expectedColor) <= 1);
+                BOOST_REQUIRE(abs((int)(actualColor - expectedColor)) <= 1);
             }
         }
     }

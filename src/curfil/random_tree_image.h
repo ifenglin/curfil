@@ -27,8 +27,8 @@
 #endif
 #ifndef CURFIL_RANDOMTREEIMAGE_H
 #define CURFIL_RANDOMTREEIMAGE_H
-#undef MIN
-#undef MAX
+#undef min
+#undef max
 #define NOMINMAX
 #include <algorithm>
 #include <assert.h>
