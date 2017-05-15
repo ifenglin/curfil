@@ -229,8 +229,6 @@ public:
         reset();
     }
 
-	//RGBDImage(const boost::filesystem::path::string_type & filename, const boost::filesystem::path::string_type & depthFilename, bool useDepthImages, bool convertToCIELab, bool useDepthFilling, bool calculateIntegralImage);
-
 	/**
      * uses the attributes of another object to set its attributes
      */
@@ -659,7 +657,7 @@ std::vector<boost::filesystem::path::string_type> listImageFilenames(const boost
  * Convenience function to find all files in the given folder that match the required filename schema.
  * See the README for the filename schema.
  */
-std::vector<LabeledRGBDImage> loadImages(const boost::filesystem::path::string_type& folder, bool useCIELab, bool useDepthImages, bool useDepthFilling, const std::vector<boost::filesystem::path::string_type>& ignoredColors, size_t& numLabels);
+std::vector<LabeledRGBDImage> loadImages(const boost::filesystem::path::string_type& folder, bool useCIELab, bool useDepthImages, bool useDepthFilling, const std::vector<std::string>& ignoredColors, size_t& numLabels);
 
 }
 

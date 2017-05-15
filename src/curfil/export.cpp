@@ -1,3 +1,4 @@
+#include "export.h"
 #if 0
 #######################################################################################
 # The MIT License
@@ -46,11 +47,10 @@
 
 namespace curfil {
 
-RandomTreeExport::RandomTreeExport(const TrainingConfiguration& configuration, const std::string& outputFolder,
-        const std::string& trainingFolder, bool verbose) :
+RandomTreeExport::RandomTreeExport(const TrainingConfiguration& configuration, const boost::filesystem::path::string_type& outputFolder,
+        const boost::filesystem::path::string_type& trainingFolder, bool verbose) :
         date(boost::posix_time::microsec_clock::local_time()), configuration(configuration),
                 outputFolder(outputFolder), trainingFolder(trainingFolder), verbose(verbose) {
-
 }
 
 void RandomTreeExport::writeXY(boost::property_tree::ptree& pt, const std::string& name, const XY& xy) {
@@ -302,7 +302,7 @@ void RandomTreeExport::writeJSON(const RandomTreeImage& tree, size_t treeNr) con
     writeTree(pt, tree);
 
     assert(!outputFolder.empty());
-    const std::string filename = boost::str(boost::format("%s/tree%d.json.gz") % outputFolder % treeNr);
+    const std::string filename = boost::str(boost::format("%s/tree%d.json.gz") % outputFolder.c_str()% treeNr);
 
     boost::iostreams::filtering_ostream ostream;
     if (boost::algorithm::ends_with(filename, ".gz")) {

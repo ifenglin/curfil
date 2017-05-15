@@ -54,8 +54,8 @@ public:
 	 * @param trainingFolder the folder the training images were loaded from
 	 * @param verbose if true, the JSON file contains per-node profiling information. Attention: verbose JSON files are significantly larger even if compressed.
 	 */
-    RandomTreeExport(const TrainingConfiguration& configuration, const std::string& outputFolder,
-            const std::string& trainingFolder, bool verbose);
+    RandomTreeExport(const TrainingConfiguration& configuration, const boost::filesystem::path::string_type& outputFolder,
+            const boost::filesystem::path::string_type& trainingFolder, bool verbose);
 
     /**
      * Export the given random tree to disk as compressed (gzip) JSON file.
@@ -74,13 +74,13 @@ public:
     template<class TreeEnsemble>
     void writeJSON(const TreeEnsemble& ensemble) const {
 
-        CURFIL_INFO("writing tree files to " << outputFolder << " (verbose: " << verbose << ")");
+        CURFIL_INFO("writing tree files to " << outputFolder.c_str() << " (verbose: " << verbose << ")");
 
         for (size_t treeNr = 0; treeNr < ensemble.getTrees().size(); treeNr++) {
             writeJSON(*(ensemble.getTree(treeNr)), treeNr);
         }
 
-        CURFIL_INFO("wrote JSON files to " << outputFolder);
+        CURFIL_INFO("wrote JSON files to " << outputFolder.c_str());
     }
 
 private:
@@ -117,8 +117,8 @@ private:
 
     const boost::posix_time::ptime date;
     const TrainingConfiguration& configuration;
-    const std::string outputFolder;
-    const std::string trainingFolder;
+    const boost::filesystem::path::string_type outputFolder;
+    const boost::filesystem::path::string_type trainingFolder;
     const bool verbose;
 
 };

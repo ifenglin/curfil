@@ -27,6 +27,7 @@
 #endif
 #include <boost/program_options.hpp>
 #include <tbb/task_scheduler_init.h>
+#include <boost/filesystem.hpp>
 
 #include "export.h"
 #include "train.h"
@@ -39,9 +40,12 @@ using namespace curfil;
 
 int main(int argc, char **argv) {
 
-    std::string folderTraining;
-    std::string outputFolder;
-    int trees;
+	/*boost::filesystem::path::string_type folderTraining;
+	boost::filesystem::path::string_type outputFolder;
+    */
+	std::string folderTraining;
+	std::string outputFolder;
+	int trees;
     unsigned int samplesPerImage;
     unsigned int featureCount;
     unsigned int minSampleCount;

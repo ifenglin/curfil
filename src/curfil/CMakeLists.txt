@@ -47,3 +47,20 @@ INSTALL(TARGETS curfil
 INSTALL(FILES random_tree.h random_tree_image.h random_forest_image.h image.h score.h random_tree_image_gpu.h predict.h import.h export.h utils.h
 	DESTINATION "include/curfil"
 )
+
+
+ADD_EXECUTABLE(curfil_train train_main.cpp)
+TARGET_LINK_LIBRARIES(curfil_train curfil)
+
+ADD_EXECUTABLE(curfil_predict predict_main.cpp)
+TARGET_LINK_LIBRARIES(curfil_predict curfil)
+
+INSTALL(TARGETS curfil_train curfil_predict
+    DESTINATION "bin"
+)
+
+IF(MDBQ_FOUND)
+	ADD_EXECUTABLE(curfil_hyperopt hyperopt_main.cpp)
+	TARGET_LINK_LIBRARIES(curfil_hyperopt curfil)
+ENDIF()
+
